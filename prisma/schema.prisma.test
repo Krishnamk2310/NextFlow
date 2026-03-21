@@ -4,12 +4,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id String @id
+  id    String @id
   email String @unique
-  workflows Workflow[]
-  createdAt DateTime @default(now())
 }
