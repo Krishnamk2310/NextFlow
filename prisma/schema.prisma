@@ -9,14 +9,14 @@ datasource db {
 }
 
 model User {
-  id          String        @id
-  clerkId     String        @unique
-  email       String
-  name        String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime
-  workflows   Workflow[]
-  WorkflowRun WorkflowRun[]
+  id           String        @id
+  clerkId      String        @unique
+  email        String
+  name         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  workflows    Workflow[]
+  workflowRuns WorkflowRun[]
 }
 
 model Workflow {
@@ -47,7 +47,7 @@ model WorkflowRun {
   completedAt DateTime?
   duration    Int?
   nodeRuns    NodeRun[]
-  User        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workflow    Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 
   @@index([userId])
