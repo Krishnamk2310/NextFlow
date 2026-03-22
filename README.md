@@ -1,10 +1,10 @@
 # NextFlow
 
-# NextFlow 🌊
 
 **NextFlow** is a premium, Krea-style workflow automation platform that leverages the power of Multimodal Large Language Models (LLMs) to process images, videos, and text in a cohesive, visual workspace.
 
-![Workflow Workspace](https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop)
+![Workflow Workspace](<img width="1918" height="910" alt="image" src="https://github.com/user-attachments/assets/f93f9956-60d4-405c-9359-d9ad39c13017" />
+)
 
 ## ✨ Core Features
 
