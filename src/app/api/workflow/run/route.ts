@@ -67,7 +67,7 @@ function buildDag(nodes: any[], edges: any[]) {
   return { nodeMap, incoming };
 }
 
-async function executeInline(nodes: any[], edges: any[]) {
+async function executeInline(nodes: any[], edges: any[], targetNodeId?: string) {
   const { nodeMap, incoming } = buildDag(nodes, edges);
   const outputs = new Map<string, any>();
   const nodeResults: Record<string, { status: string; output: any; error?: string }> = {};
@@ -146,13 +146,17 @@ async function executeInline(nodes: any[], edges: any[]) {
     return output;
   };
 
-  const sources = new Set(edges.map(e => e.source));
-  const sinks = nodes.filter(n => !sources.has(n.id));
-  
-  if (sinks.length === 0 && nodes.length > 0) {
-    await Promise.all(nodes.map(n => execute(n.id)));
+  if (targetNodeId && nodeMap.has(targetNodeId)) {
+    await execute(targetNodeId);
   } else {
-    await Promise.all(sinks.map(n => execute(n.id)));
+    const sources = new Set(edges.map(e => e.source));
+    const sinks = nodes.filter(n => !sources.has(n.id));
+    
+    if (sinks.length === 0 && nodes.length > 0) {
+      await Promise.all(nodes.map(n => execute(n.id)));
+    } else {
+      await Promise.all(sinks.map(n => execute(n.id)));
+    }
   }
 
   return nodeResults;
@@ -166,7 +170,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { nodes, edges, scope = 'FULL' } = body;
+    const { nodes, edges, scope = 'FULL', targetNodeId } = body;
 
     if (!nodes || !edges) {
       return NextResponse.json({ success: false, error: "nodes and edges are required" }, { status: 400 });
@@ -175,7 +179,12 @@ export async function POST(req: Request) {
     await prisma.user.upsert({
       where: { id: userId },
       update: {},
-      create: { id: userId, email: `${userId}@clerk.dev` }
+      create: { 
+        id: userId, 
+        clerkId: userId,
+        email: `${userId}@clerk.dev`,
+        updatedAt: new Date()
+      }
     });
 
     const workflow = await prisma.workflow.create({
@@ -190,6 +199,7 @@ export async function POST(req: Request) {
     const workflowRun = await prisma.workflowRun.create({
       data: {
         workflowId: workflow.id,
+        userId,
         status: 'RUNNING',
         scope,
         nodeRuns: {
@@ -208,14 +218,14 @@ export async function POST(req: Request) {
     let results: Record<string, { status: string; output: any; error?: string }> = {};
 
     try {
-      results = await executeInline(nodes, edges);
+      results = await executeInline(nodes, edges, targetNodeId);
 
       // Update each node run
       for (const [nodeId, result] of Object.entries(results)) {
         await prisma.nodeRun.updateMany({
           where: { workflowRunId: workflowRun.id, nodeId },
           data: {
-            status: result.status,
+            status: result.status as any,
             outputs: result.output ? { result: result.output } : undefined,
             error: result.error || null,
             completedAt: new Date(),
@@ -233,7 +243,7 @@ export async function POST(req: Request) {
     await prisma.workflowRun.update({
       where: { id: workflowRun.id },
       data: {
-        status: overallStatus,
+        status: overallStatus as any,
         completedAt: new Date(),
         duration: Date.now() - startTime,
       }

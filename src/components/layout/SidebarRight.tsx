@@ -40,10 +40,10 @@ function statusIcon(status: string) {
 }
 
 function statusColor(status: string) {
-  if (status === 'SUCCESS') return 'border-emerald-500/30 bg-emerald-500/5'
-  if (status === 'FAILED') return 'border-red-500/30 bg-red-500/5'
-  if (status === 'RUNNING') return 'border-purple-500/30 bg-purple-500/5'
-  return 'border-zinc-700 bg-zinc-900/50'
+  if (status === 'SUCCESS') return 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5'
+  if (status === 'FAILED') return 'border-red-500/20 text-red-400 bg-red-500/5'
+  if (status === 'RUNNING') return 'border-purple-500/20 text-purple-400 bg-purple-500/5'
+  return 'border-zinc-700/50 text-zinc-500 bg-zinc-800/20'
 }
 
 function timeAgo(date: string) {
@@ -71,7 +71,8 @@ export function SidebarRight() {
     setLoading(true)
     try {
       const res = await fetch('/api/workflow/runs')
-      const data = await res.json()
+      const text = await res.text()
+      const data = JSON.parse(text)
       setRuns(data.runs || [])
     } catch (err) {
       console.error("Failed to fetch runs:", err)
@@ -120,132 +121,154 @@ export function SidebarRight() {
   }
 
   return (
-    <aside className={`relative flex h-full flex-col border-l border-zinc-800 bg-zinc-950/80 transition-all duration-300 ${collapsed ? 'w-16' : 'w-80'}`}>
+    <aside className={`relative flex h-full flex-col border-l border-white/5 bg-zinc-950/80 backdrop-blur-xl transition-all duration-300 z-20 ${collapsed ? 'w-20' : 'w-80'}`}>
       <Button 
         variant="ghost" 
         size="icon" 
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -left-4 top-4 z-10 h-8 w-8 rounded-full border border-zinc-700 bg-zinc-900 shadow-md hover:bg-zinc-800"
+        className="absolute -left-4 top-4 z-30 h-8 w-8 rounded-full border border-white/10 bg-zinc-900 shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:bg-zinc-800 transition-all text-zinc-400"
       >
         {collapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
       </Button>
 
-      <div className="border-b border-zinc-800 p-4 shrink-0 flex items-center justify-between">
+      <div className="border-b border-white/5 p-4 shrink-0 flex items-center justify-between">
         {!collapsed && (
           <>
-            <h2 className="font-semibold text-zinc-100 flex items-center gap-2">
-              <History className="h-4 w-4 text-purple-400"/>
-              Run History
+            <h2 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
+              <History className="h-3.5 w-3.5 text-purple-400"/>
+              Workflow History
             </h2>
-            <Button variant="ghost" size="icon" onClick={fetchRuns} className="h-7 w-7 text-zinc-500 hover:text-zinc-300">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={fetchRuns} 
+              className="h-8 w-8 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 transition-all"
+            >
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             </Button>
           </>
         )}
-        {collapsed && <History className="h-5 w-5 mx-auto text-zinc-400" />}
+        {collapsed && <History className="h-5 w-5 mx-auto text-zinc-500" />}
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {!collapsed && runs.length === 0 && (
-          <div className="p-4 flex flex-col items-center justify-center h-full text-zinc-500">
-            <p className="text-sm text-center">No workflow runs yet.<br/>Execute a node to see history.</p>
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 custom-scrollbar">
+        {!mounted ? (
+          <div className="flex flex-col items-center justify-center py-20 animate-pulse opacity-20">
+            <Clock className="h-10 w-10 mb-4 stroke-[1.5]" />
+            <div className="h-2 w-24 bg-zinc-800 rounded" />
           </div>
-        )}
-
-        {!collapsed && runs.map((run) => (
-          <div key={run.id} className="border-b border-zinc-800/50">
-            <div
-              onClick={() => setExpandedRun(expandedRun === run.id ? null : run.id)}
-              className={`w-full text-left p-3 hover:bg-zinc-900/50 transition-colors group cursor-pointer ${expandedRun === run.id ? 'bg-zinc-900/30' : ''}`}
+        ) : runs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-zinc-600 opacity-40">
+            <Clock className="h-10 w-10 mb-4 stroke-[1.5]" />
+            <p className="text-xs font-bold uppercase tracking-widest text-center">No Activity Yet</p>
+          </div>
+        ) : (
+          runs.map((run) => (
+            <div 
+              key={run.id} 
+              className={`
+                group rounded-2xl border transition-all duration-300 overflow-hidden
+                ${expandedRun === run.id ? 'bg-white/[0.08] border-white/10 shadow-xl' : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.05] hover:border-white/10'}
+              `}
             >
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  {statusIcon(run.status)}
-                  <div className="flex flex-col">
-                    <span className="text-xs font-medium text-zinc-200 truncate max-w-[120px]">
-                      {run.workflow?.name || 'Workflow'}
-                    </span>
-                    <span className="text-[10px] text-zinc-600">{timeAgo(run.startedAt)}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleRestore(run, e)}
-                    className="h-6 px-2 text-[10px] text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    Restore
-                  </Button>
-                  <div
-                    onClick={(e) => handleDelete(run.id, e)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/20 cursor-pointer"
-                  >
-                    <Trash2 className="h-3 w-3 text-red-400" />
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`text-[10px] px-1.5 py-0.5 rounded border ${statusColor(run.status)}`}>
-                  {run.status}
-                </span>
-                <span className="text-[10px] text-zinc-600">
-                  {run.nodeRuns.length} nodes • {run.scope}
-                  {run.duration ? ` • ${(run.duration / 1000).toFixed(1)}s` : ''}
-                </span>
-              </div>
-            </div>
-
-            {expandedRun === run.id && (
-              <div className="px-3 pb-3 space-y-1">
-                {run.nodeRuns.map((nr) => {
-                  const outputText = nr.outputs?.result 
-                    ? (typeof nr.outputs.result === 'string' ? nr.outputs.result : JSON.stringify(nr.outputs.result))
-                    : null
-                  
-                  const copyToClipboard = (text: string, e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    navigator.clipboard.writeText(text);
-                    toast.success("Result copied to clipboard");
-                  };
-
-                  return (
-                    <div key={nr.id} className={`rounded-xl border ${statusColor(nr.status)} overflow-hidden bg-zinc-900/20`}>
-                      <div className="flex items-center gap-2 px-2.5 py-2">
-                        {statusIcon(nr.status)}
-                        <span className="text-[11px] font-semibold text-zinc-300 flex-1 truncate">{nr.nodeId}</span>
-                        <span className="text-[10px] text-zinc-500 font-medium px-1.5 py-0.5 bg-zinc-800 rounded">{nr.nodeType}</span>
-                      </div>
-                      {outputText && (
-                        <div className="px-2.5 pb-2.5 space-y-2">
-                          <p className="text-[11px] text-zinc-400 whitespace-pre-wrap leading-relaxed bg-black/20 p-2 rounded-lg border border-white/5">
-                            {outputText}
-                          </p>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={(e) => copyToClipboard(outputText, e)}
-                            className="h-6 w-full text-[10px] text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
-                          >
-                            Copy Result
-                          </Button>
-                        </div>
-                      )}
-                      {nr.error && (
-                        <div className="px-2.5 pb-2.5">
-                          <p className="text-[10px] text-red-400 font-medium bg-red-500/5 p-2 rounded border border-red-500/10">{nr.error}</p>
-                        </div>
-                      )}
+              <div
+                onClick={() => setExpandedRun(expandedRun === run.id ? null : run.id)}
+                className="p-4 cursor-pointer"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-2 w-2 rounded-full ${run.status === 'RUNNING' ? 'animate-pulse shadow-[0_0_8px_currentColor]' : ''} ${run.status === 'SUCCESS' ? 'bg-emerald-500' : run.status === 'FAILED' ? 'bg-red-500' : 'bg-zinc-500'}`} />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-zinc-200 truncate max-w-[140px] group-hover:text-white transition-colors">
+                        {run.workflow?.name || 'Untitled Flow'}
+                      </span>
+                      <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-tighter">{timeAgo(run.startedAt)}</span>
                     </div>
-                  )
-                })}
-                {run.nodeRuns.length === 0 && (
-                  <p className="text-[10px] text-zinc-600 text-center py-2">No node data</p>
-                )}
+                  </div>
+                  
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => handleRestore(run, e)}
+                      className="h-7 px-2.5 text-[10px] font-bold uppercase tracking-wider text-purple-400 hover:text-purple-100 hover:bg-purple-500/20 rounded-full transition-all"
+                    >
+                      Restore
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleDelete(run.id, e)}
+                      className="h-7 w-7 rounded-full text-zinc-600 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${statusColor(run.status)}`}>
+                    {run.status}
+                  </span>
+                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-tight opacity-60">
+                    {run.nodeRuns.length} Steps • {run.duration ? `${(run.duration / 1000).toFixed(1)}s` : 'Active'}
+                  </span>
+                </div>
               </div>
-            )}
-          </div>
-        ))}
+
+              {expandedRun === run.id && (
+                <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-3 bg-black/20">
+                  {run.nodeRuns.map((nr) => {
+                    const outputText = nr.outputs?.result 
+                      ? (typeof nr.outputs.result === 'string' ? nr.outputs.result : JSON.stringify(nr.outputs.result, null, 2))
+                      : null
+                    
+                    const copyToClipboard = (text: string, e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(text);
+                      toast.success("Result copied");
+                    };
+
+                    return (
+                      <div key={nr.id} className={`rounded-xl border ${statusColor(nr.status)} overflow-hidden bg-white/[0.02]`}>
+                        <div className="flex items-center gap-2 p-3 pb-2">
+                          {statusIcon(nr.status)}
+                          <span className="text-[11px] font-bold text-zinc-300 flex-1 truncate">{nr.nodeId}</span>
+                          <span className="text-[9px] font-black uppercase tracking-widest text-zinc-600 px-1.5 py-0.5 bg-white/5 rounded-md">
+                            {nr.nodeType}
+                          </span>
+                        </div>
+                        {outputText && (
+                          <div className="px-3 pb-3 space-y-2">
+                            <p className="text-[10px] text-zinc-400 whitespace-pre-wrap leading-relaxed bg-black/40 p-2.5 rounded-lg border border-white/5 max-h-[120px] overflow-y-auto custom-scrollbar font-medium">
+                              {outputText}
+                            </p>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={(e) => copyToClipboard(outputText, e)}
+                              className="h-6 w-full text-[9px] font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-300 hover:bg-white/5 rounded-md"
+                            >
+                              Copy Output
+                            </Button>
+                          </div>
+                        )}
+                        {nr.error && (
+                          <div className="px-3 pb-3">
+                            <p className="text-[10px] text-red-400 font-bold bg-red-500/10 p-2.5 rounded-lg border border-red-500/20">{nr.error}</p>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  {run.nodeRuns.length === 0 && (
+                    <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest text-center py-2 opacity-50">No activity data</p>
+                  )}
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
     </aside>
   )

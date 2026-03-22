@@ -1,7 +1,5 @@
 import { task, tasks } from "@trigger.dev/sdk/v3";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export const workflowCoordinator = task({
   id: "workflow-coordinator",
@@ -63,7 +61,7 @@ export const workflowCoordinator = task({
 
         await prisma.nodeRun.updateMany({
            where: { workflowRunId, nodeId },
-           data: { status: "RUNNING", inputs: inputs as any }
+           data: { status: "RUNNING" }
         });
 
         let finalOutput: any = null;

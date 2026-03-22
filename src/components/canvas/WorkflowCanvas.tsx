@@ -12,6 +12,8 @@ import { LLMNode } from '@/components/nodes/LLMNode'
 import { CropImageNode } from '@/components/nodes/CropImageNode'
 import { ExtractFrameNode } from '@/components/nodes/ExtractFrameNode'
 
+import { CustomGradientEdge } from './EdgeTypes'
+
 export function WorkflowCanvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null)
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useWorkflowStore()
@@ -55,21 +57,31 @@ export function WorkflowCanvas() {
     'extract-frame': ExtractFrameNode,
   }), [])
 
+  const edgeTypes = useMemo(() => ({
+    gradient: CustomGradientEdge,
+  }), [])
+
   return (
     <div className="h-full w-full relative bg-zinc-950" ref={reactFlowWrapper}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onDrop={onDrop as any}
         onDragOver={onDragOver as any}
+        onNodeDragStop={() => useWorkflowStore.getState().takeSnapshot()}
         fitView
         className="dark"
         minZoom={0.1}
         maxZoom={2}
+        defaultEdgeOptions={{
+          type: 'gradient',
+          animated: true,
+        }}
       >
         <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#3f3f46" />
         <Controls className="fill-zinc-400 text-zinc-400" />

@@ -59,14 +59,14 @@ export function ExtractFrameNode({ id, data }: { id: string, data: any }) {
 
     video.onerror = (e) => {
       // If native load failed due to being an unsupported source (Code 4 - like github raw text/plain)
-      // we can attempt to fetch it directly as a Blob to circumvent MIME type security headers
-      if (!fallbackAttempted && videoUrl.startsWith('http') && video.error?.code === 4) {
+      // or other network errors, attempt to use the proxy immediately for external URLs
+      if (!fallbackAttempted && videoUrl.startsWith('http')) {
         fallbackAttempted = true
-        console.log("Native load failed (Code 4), attempting Blob fetch fallback for URL:", videoUrl)
+        console.log("Native load failed, attempting proxy fallback for URL:", videoUrl)
         
-        fetch(videoUrl)
+        fetch(`/api/proxy?url=${encodeURIComponent(videoUrl)}`)
           .then(res => {
-            if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} for URL: ${videoUrl}`)
+            if (!res.ok) throw new Error(`Proxy fetch failed: ${res.status}`)
             return res.blob()
           })
           .then(blob => {
@@ -78,11 +78,11 @@ export function ExtractFrameNode({ id, data }: { id: string, data: any }) {
             video.load()
           })
           .catch(err => {
-            console.error("Blob fallback fetch also failed:", err)
+            console.error("Proxy fallback fetch failed:", err)
             const errorMsg = video.error ? video.error.message || `Code ${video.error.code}` : "Unknown error"
-            updateNodeData(id, { error: `Failed to load video (${errorMsg}). Blob fallback failed.` })
+            updateNodeData(id, { error: `Failed to load video (${errorMsg}). Proxy fallback also failed.` })
           })
-        return
+        return;
       }
 
       const errorMsg = video.error ? video.error.message || `Code ${video.error.code}` : "Unknown error"

@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaNeon } from '@prisma/adapter-neon';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
-
-function getDb() {
-  const url = process.env.DATABASE_URL!;
-  const adapter = new PrismaNeon({ connectionString: url });
-  return new PrismaClient({ adapter } as any);
-}
 
 export async function DELETE(req: Request) {
   try {
@@ -16,8 +9,6 @@ export async function DELETE(req: Request) {
     if (!runId) {
       return NextResponse.json({ success: false, error: "runId required" }, { status: 400 });
     }
-
-    const prisma = getDb();
 
     await prisma.nodeRun.deleteMany({ where: { workflowRunId: runId } });
     await prisma.workflowRun.delete({ where: { id: runId } });

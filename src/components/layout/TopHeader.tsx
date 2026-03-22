@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from '@/components/ui/button'
-import { Download, Upload, Play, Save, Box, Loader2 } from 'lucide-react'
+import { Download, Upload, Play, Save, Box, Loader2, Zap, Undo2, Redo2 } from 'lucide-react'
 import { useWorkflowStore } from '@/store/workflowStore'
 import { WorkflowJSONSchema } from '@/lib/execution/schemas'
 import { SAMPLE_WORKFLOW } from '@/lib/execution/sampleWorkflow'
@@ -94,7 +94,14 @@ export function TopHeader() {
         body: JSON.stringify({ nodes, edges, scope: 'FULL' }),
       })
 
-      const data = await response.json()
+      const text = await response.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        console.error("Failed to parse response as JSON. Raw response:", text.slice(0, 200));
+        throw new Error(`Invalid response format (not JSON). ${text.slice(0, 50)}...`);
+      }
 
       if (data.success) {
         const dur = data.duration ? `${(data.duration / 1000).toFixed(1)}s` : ''
@@ -132,49 +139,99 @@ export function TopHeader() {
   }
 
   return (
-    <header className="flex h-14 w-full items-center justify-between border-b border-zinc-800 bg-zinc-950/80 px-4 backdrop-blur-md">
-      <div className="flex items-center gap-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-600 text-sm font-bold shadow-lg shadow-purple-500/20">
-          NF
+    <header className="fixed top-0 left-0 right-0 z-50 flex h-16 w-full items-center justify-between border-b border-white/10 bg-black/40 px-6 backdrop-blur-xl transition-all duration-300">
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 group cursor-pointer">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#8B5CF6] via-[#7C3AED] to-[#3B82F6] text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] group-hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] group-hover:scale-110 transition-all duration-300 relative overflow-hidden">
+            {/* Subtle inner glow for premium feel */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-50" />
+            <Zap className="h-5 w-5 fill-white text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]" />
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-sm font-black tracking-tighter text-white leading-none">NEXTFLOW</h1>
+            <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest leading-none mt-1 group-hover:text-purple-400 transition-colors">Core Engine</span>
+          </div>
         </div>
-        <h1 className="text-sm font-medium tracking-wide">NextFlow</h1>
-      </div>
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={handleLoadSample} className="text-zinc-400 hover:text-zinc-100 hidden sm:flex">
-          <Box className="h-4 w-4 mr-2" /> Load Sample
-        </Button>
-
-        <div className="w-px h-4 bg-zinc-800 mx-1 hidden sm:block" />
-
-        <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} className="text-zinc-400 hover:text-zinc-100 hidden sm:flex">
-          <Upload className="h-4 w-4 mr-2" /> Import
-        </Button>
-        <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleImport} />
         
-        <Button variant="ghost" size="sm" onClick={handleExport} className="text-zinc-400 hover:text-zinc-100 hidden sm:flex">
-          <Download className="h-4 w-4 mr-2" /> Export
-        </Button>
+        <div className="h-6 w-px bg-white/5 mx-2 hidden md:block" />
+        
+        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/5">
+          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">System Operational</span>
+        </div>
+      </div>
 
-        <div className="w-px h-4 bg-zinc-800 mx-1" />
+      <div className="flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2 mr-4">
+          <Button variant="ghost" size="sm" onClick={handleLoadSample} className="h-10 text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 gap-2 px-4 rounded-xl transition-all">
+            <Box className="h-3.5 w-3.5" /> Samples
+          </Button>
 
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleSaveWorkflow}
-          disabled={isRunning}
-          className="bg-zinc-900 border-zinc-800 text-zinc-100 hover:bg-zinc-800"
-        >
-          {isRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Save
-        </Button>
-        <Button 
-          size="sm" 
-          onClick={handleRunWorkflow}
-          disabled={isRunning}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-md shadow-purple-500/20 w-[140px]"
-        >
-          {isRunning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />} 
-          {isRunning ? "Running..." : "Run Workflow"}
-        </Button>
+          <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} className="h-10 text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 gap-2 px-4 rounded-xl transition-all">
+            <Upload className="h-3.5 w-3.5" /> Import
+          </Button>
+          <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={handleImport} />
+          
+          <Button variant="ghost" size="sm" onClick={handleExport} className="h-10 text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-white/5 gap-2 px-4 rounded-xl transition-all">
+            <Download className="h-3.5 w-3.5" /> Export
+          </Button>
+        </div>
+
+        <div className="h-8 w-px bg-white/5 mx-2 hidden md:block" />
+
+        <div className="flex items-center gap-1 mr-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => useWorkflowStore.getState().undo()}
+            disabled={!useWorkflowStore(s => s.canUndo)}
+            className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-white/5 disabled:opacity-20 transition-all rounded-lg"
+            title="Undo (Ctrl+Z)"
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => useWorkflowStore.getState().redo()}
+            disabled={!useWorkflowStore(s => s.canRedo)}
+            className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-white/5 disabled:opacity-20 transition-all rounded-lg"
+            title="Redo (Ctrl+Y)"
+          >
+            <Redo2 className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleSaveWorkflow}
+            disabled={isRunning}
+            className="h-11 bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 text-[11px] font-bold uppercase tracking-widest text-zinc-200 px-6 rounded-xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+          >
+            {isRunning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />} Save
+          </Button>
+
+          <Button 
+            size="sm" 
+            onClick={handleRunWorkflow}
+            disabled={isRunning}
+            className="h-11 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-[11px] font-black uppercase tracking-widest px-8 rounded-xl transition-all shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 hover:scale-[1.02] active:scale-95 disabled:opacity-50 min-w-[170px]"
+          >
+            {isRunning ? (
+              <div className="flex items-center gap-2 text-white">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Running...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-white">
+                <Play className="h-4 w-4 fill-current" />
+                <span>Execute Flow</span>
+              </div>
+            )}
+          </Button>
+        </div>
       </div>
     </header>
   )

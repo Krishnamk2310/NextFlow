@@ -1,0 +1,86 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/client_v2"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String        @id
+  clerkId     String        @unique
+  email       String
+  name        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+  workflows   Workflow[]
+  WorkflowRun WorkflowRun[]
+}
+
+model Workflow {
+  id          String        @id @default(cuid())
+  userId      String
+  name        String        @default("Untitled Workflow")
+  description String?
+  nodes       Json
+  edges       Json
+  viewport    Json?
+  isPublished Boolean       @default(false)
+  runCount    Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs        WorkflowRun[]
+
+  @@index([userId])
+}
+
+model WorkflowRun {
+  id          String    @id @default(cuid())
+  workflowId  String
+  userId      String
+  status      RunStatus @default(PENDING)
+  scope       RunScope  @default(FULL)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  duration    Int?
+  nodeRuns    NodeRun[]
+  User        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workflow    Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([workflowId])
+}
+
+model NodeRun {
+  id            String      @id @default(cuid())
+  workflowRunId String
+  nodeId        String
+  nodeType      String
+  status        RunStatus   @default(PENDING)
+  inputs        Json?
+  outputs       Json?
+  error         String?
+  startedAt     DateTime    @default(now())
+  completedAt   DateTime?
+  duration      Int?
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+
+  @@index([workflowRunId])
+}
+
+enum RunScope {
+  FULL
+  PARTIAL
+  SINGLE
+}
+
+enum RunStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}

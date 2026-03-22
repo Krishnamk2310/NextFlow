@@ -12,6 +12,7 @@ export async function GET() {
     }
 
     const runs = await prisma.workflowRun.findMany({
+      where: { userId },
       orderBy: { startedAt: 'desc' },
       take: 20,
       include: {

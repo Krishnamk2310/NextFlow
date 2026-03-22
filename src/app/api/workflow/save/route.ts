@@ -11,6 +11,8 @@ export async function POST(req: Request) {
 
     const { nodes, edges, name } = await req.json();
 
+    // Check for an existing workflow for this user, or create one if none exists
+    // For now, we'll just update the latest modified workflow or create the first one
     let workflow = await prisma.workflow.findFirst({
       where: { userId },
       orderBy: { updatedAt: 'desc' }
