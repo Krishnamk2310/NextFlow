@@ -1,69 +1,105 @@
 # NextFlow
 
 
-**NextFlow** is a premium, Krea-style workflow automation platform that leverages the power of Multimodal Large Language Models (LLMs) to process images, videos, and text in a cohesive, visual workspace.
+**NextFlow** is a premium, Krea-style workflow automation platform that leverages the power of Multimodal Large Language Models (LLMs) to process images, videos, and text in a cohesive, visual workspace. Build, execute, and restore complex data processing pipelines with a high-performance drag-and-drop interface.
 
 <img width="1918" height="910" alt="image" src="https://github.com/user-attachments/assets/5e2b97aa-f7b4-4c56-af7f-2951351b0dff" />
 
 
-## ✨ Core Features
+---
 
-- **🧠 Multimodal LLM Intelligence**: Integrated with **Gemini 2.0 Flash**, allowing for deep analysis of both text and visual data.
-- **📸 Intelligent Frame Extraction**: Upload videos and extract specific frames at any timestamp (seconds or percentage) for targeted AI analysis.
-- **👁️ Vision Support**: Direct Base64 image encoding for seamless "image-to-text" and "image-to-analysis" workflows.
-- **🕰️ Workflow Time Machine**: Complete **Run History** with a one-click **Restore** feature to jump back to any previous version of your workspace.
-- **🎨 Premium UI/UX**: A sleek, dark-mode interface inspired by modern design tools like Krea and Framer.
-- **🗑️ Interactive Canvas**: Full control over your logic with draggable nodes, smart connections, and easy node deletion.
+## 🚀 Key Features
 
-## 🧩 Node Reference
+### 🎨 Visual Workflow Builder
+Built with **React Flow (@xyflow/react)**, NextFlow provides a rich, interactive canvas:
+- **Drag & Drop Nodes**: Easily add processing steps to your workspace.
+- **Smart Connections**: Directional edges with type-safe validation (e.g., preventing image output from connecting to text input).
+- **DAG Guardrails**: Automatic cycle detection to ensure acyclic graph (Directed Acyclic Graph) integrity.
+- **Dynamic UI**: Responsive and fluid layout with Framer Motion animations and a glassmorphic dark-mode aesthetic.
 
-| Node | Purpose |
-|------|---------|
-| **Text** | Input any raw text or professional prompts for the workflow. |
-| **Upload Image** | Upload a local image or use a remote URL as a visual input. |
-| **Upload Video** | Support for MP4, MOV, and WEBM video uploads. |
-| **Extract Frame** | Seek to a specific second or `%` in a video and capture a high-quality frame. |
-| **Run Any LLM** | The execution hub. Combines text and images for analysis via **Gemini 2.0 Flash**. |
-| **Crop Image** | A utility node for future image preprocessing and focused area analysis. |
+### 🧠 AI-Powered Intelligence
+Integrated with **Google Gemini (Generative AI)** for advanced multimodal capabilities:
+- **Multimodal Analysis**: Analyze images, videos, and text simultaneously within a single node.
+- **Custom Prompt Chaining**: Feed the output of one AI node into another, or combine multiple image/text sources for complex reasoning.
+- **Vision-to-Text**: Direct Base64 processing for high-fidelity visual description and analysis.
 
-## 🛠️ Tech Stack
+### 🖼️ Media Manipulation & Tools
+Native support for common image and video tasks:
+- **Frame Extraction**: upload a video and extract specific frames at any timestamp (seconds or percentage) using **FFmpeg** for targeted AI analysis.
+- **Image Cropping**: Precision cropping with coordinate and dimension controls to focus on specific regions of interest.
+- **File Management**: Seamless asset handling with integrated file uploading via **Transloadit**.
+
+### ⚡ Asynchronous Execution & Coordination
+NextFlow uses **Trigger.dev v3** to handle distributed background workflows:
+- **Topological Coordinator**: A robust engine manages the complex dependency chain of your DAG, ensuring nodes execute only when their inputs are ready.
+- **Real-time Monitoring**: Track execution status (Running, Success, Failed) and view live outputs directly on the canvas and history sidebar.
+
+### 🕰️ Workflow History & "Time Machine"
+- **Run History**: Complete log of every workflow execution, including inputs, outputs, and durations.
+- **One-Click Restore**: Mistake-proof your creative process with a "Time Machine" feature that allows you to restore any previous version of your workspace from its run history.
+
+---
+
+## 🛠️ Node Library
+
+| Node Type | Description | Inputs | Outputs |
+| :--- | :--- | :--- | :--- |
+| **Text** | Static text input or constant prompt value. | - | `text` |
+| **Upload Image**| Handlers image file selection and hosting. | - | `image_url` |
+| **Upload Video**| Handlers video file selection and hosting. | - | `video_url` |
+| **LLM (Gemini)** | The execution hub. Combines text and images for AI analysis. | `system_prompt`, `user_message`, `images` | `text` |
+| **Crop Image** | Crops an input image based on percentages. | `image_url`, `x`, `y`, `width`, `height` | `image_url` |
+| **Extract Frame**| Grabs a high-quality frame from a video at a timestamp. | `video_url`, `timestamp` | `image_url` |
+
+---
+
+## 🏗️ Technical Stack
 
 - **Framework**: [Next.js 15+](https://nextjs.org/) (App Router)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Workflow Engine**: [@xyflow/react](https://reactflow.dev/) (formerly React Flow)
-- **AI**: [Google Generative AI SDK](https://ai.google.dev/) (Gemini 2.0 Flash)
-- **Database**: [Prisma](https://www.prisma.io/) + [Neon (PostgreSQL)](https://neon.tech/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/)
+- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/)
+- **Database**: [Prisma](https://www.prisma.io/) with [Neon](https://neon.tech/) (PostgreSQL)
 - **Auth**: [Clerk](https://clerk.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
+- **Workflow Engine**: [Trigger.dev v3](https://trigger.dev/)
+- **Flow UI**: [@xyflow/react](https://reactflow.dev/)
+- **AI**: [Google Generative AI](https://ai.google.dev/) (Gemini 1.5/2.0 Flash)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
 
-## 🚀 Getting Started
+---
 
-### 1. Prerequisites
-- Node.js 18+
-- A Google AI Studio API Key (for Gemini)
-- A Neon Database URL
-- A Clerk Account (for authentication)
+## 🏁 Getting Started
 
-### 2. Environment Setup
-Create a `.env.local` file in the root directory:
+1. **Clone the repository**:
+   ```bash
+   git clone <repo-url>
+   cd NextFlow
+   ```
 
-```env
-DATABASE_URL="your-neon-db-url"
-GEMINI_API_KEY="your-gemini-api-key"
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="your-clerk-key"
-CLERK_SECRET_KEY="your-clerk-secret"
-```
+3. **Set up environment variables**:
+   Create a `.env.local` file with your keys for Clerk, Neon, Gemini, and Trigger.dev.
 
-### 3. Installation
-```bash
-npm install
-npx prisma generate
-npx prisma db push
-npm run dev
-```
+4. **Prepare Database**:
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
+
+5. **Run Servers**:
+   ```bash
+   # Terminal 1: Next.js dev server
+   npm run dev
+   
+   # Terminal 2: Trigger.dev dev server
+   npx trigger.dev@latest dev
+   ```
 
 Open [http://localhost:3000](http://localhost:3000) to start building your flows!
+
+
 
 
