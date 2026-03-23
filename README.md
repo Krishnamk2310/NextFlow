@@ -71,7 +71,7 @@ NextFlow uses **Trigger.dev v3** to handle distributed background workflows:
 
 1. **Clone the repository**:
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/Krishnamk2310/NextFlow
    cd NextFlow
    ```
 
